@@ -23,7 +23,7 @@ public class LogService {
 
                 for (ConsumerRecord<String, String> record : records) {
                     System.out.println("__________________________________________");
-                    System.out.println("LOG");
+                    System.out.println("LOG " + record.topic());
                     System.out.println(record.key());
                     System.out.println(record.value());
                     System.out.println(record.partition());
