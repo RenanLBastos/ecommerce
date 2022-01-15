@@ -12,42 +12,30 @@ public class EmailService {
 
     public static void main(String[] args) {
 
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties());
-        consumer.subscribe(Collections.singletonList("ECOMMERCE_SEND_EMAIL"));
-        while (true) {
-            ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
+        EmailService emailService = new EmailService();
+        KafkaService service = new KafkaService(EmailService.class.getSimpleName(), "ECOMMERCE_SEND_EMAIL", emailService::parse);
 
-            if (!records.isEmpty()) {
-                System.out.println("Encontrei " + records.count() + " registros");
+        service.run();
+    }
 
-                for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("__________________________________________");
-                    System.out.println("sending email, checking for fraude");
-                    System.out.println(record.key());
-                    System.out.println(record.value());
-                    System.out.println(record.partition());
-                    System.out.println(record.offset());
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        //ignoring
-                        e.printStackTrace();
-                    }
-                    System.out.println("Email sent");
-                }
-            }
+    private void parse (ConsumerRecord<String, String> record) {
+
+        System.out.println("__________________________________________");
+        System.out.println("sending email, checking for fraude");
+        System.out.println(record.key());
+        System.out.println(record.value());
+        System.out.println(record.partition());
+        System.out.println(record.offset());
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            //ignoring
+            e.printStackTrace();
         }
+        System.out.println("Email sent");
     }
 
-    private static Properties properties() {
 
-        Properties properties = new Properties();
 
-        properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:29092");
-        properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, EmailService.class.getSimpleName());
 
-        return properties;
-    }
 }

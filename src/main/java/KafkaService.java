@@ -7,14 +7,21 @@ import org.apache.kafka.common.serialization.StringDeserializer;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Properties;
-import java.util.regex.Pattern;
+import java.util.UUID;
 
-public class LogService {
+class KafkaService {
+    private final KafkaConsumer<String, String> consumer;
+    private final ConsumerFunction parse;
 
-    public static void main(String[] args) {
+    KafkaService(String groupId, String topic, ConsumerFunction parse) {
+        this.parse = parse;
 
-        KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties());
-        consumer.subscribe(Pattern.compile("ECOMMERCE.*"));
+        this.consumer = new KafkaConsumer<>(properties(groupId));
+        consumer.subscribe(Collections.singletonList(topic));
+    }
+
+    void run() {
+
         while (true) {
             ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(100));
 
@@ -22,26 +29,22 @@ public class LogService {
                 System.out.println("Encontrei " + records.count() + " registros");
 
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println("__________________________________________");
-                    System.out.println("LOG " + record.topic());
-                    System.out.println(record.key());
-                    System.out.println(record.value());
-                    System.out.println(record.partition());
-                    System.out.println(record.offset());
+                    parse.consume(record);
                 }
             }
         }
+
     }
 
-    private static Properties properties() {
+    private static Properties properties(String groupId) {
 
         Properties properties = new Properties();
 
         properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, "127.0.0.1:9092");
         properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, LogService.class.getSimpleName());
-
+        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, groupId);
+        properties.setProperty(ConsumerConfig.CLIENT_ID_CONFIG, UUID.randomUUID().toString());
         return properties;
     }
 }
